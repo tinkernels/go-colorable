@@ -19,6 +19,14 @@ func NewColorable(file *os.File) io.Writer {
 	return file
 }
 
+func NewColorableWithWriter(writer io.Writer) io.Writer {
+    if writer == nil {
+        panic("nil passed instead of *os.File to NewColorable()")
+    }
+
+    return writer
+}
+
 // NewColorableStdout returns new instance of Writer which handles escape sequence for stdout.
 func NewColorableStdout() io.Writer {
 	return os.Stdout

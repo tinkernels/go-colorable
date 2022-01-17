@@ -117,6 +117,24 @@ func NewColorable(file *os.File) io.Writer {
 	return file
 }
 
+func NewColorableWithWriter(writer io.Writer) io.Writer {
+    if writer == nil {
+        panic("nil passed instead of *os.File to NewColorable()")
+    }
+
+    if isatty.IsTerminal(os.Stdout.Fd()) {
+        var mode uint32
+        if r, _, _ := procGetConsoleMode.Call(os.Stdout.Fd(), uintptr(unsafe.Pointer(&mode))); r != 0 && mode&cENABLE_VIRTUAL_TERMINAL_PROCESSING != 0 {
+            return writer
+        }
+        var csbi consoleScreenBufferInfo
+        handle := syscall.Handle(os.Stdout.Fd())
+        procGetConsoleScreenBufferInfo.Call(uintptr(handle), uintptr(unsafe.Pointer(&csbi)))
+        return &Writer{out: writer, handle: handle, oldattr: csbi.attributes, oldpos: coord{0, 0}}
+    }
+    return writer
+}
+
 // NewColorableStdout returns new instance of Writer which handles escape sequence for stdout.
 func NewColorableStdout() io.Writer {
 	return NewColorable(os.Stdout)
